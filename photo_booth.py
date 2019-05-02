@@ -87,7 +87,7 @@ class CameraTest(tk.Frame):
 
         image = self.img.resize((128, 128)).convert('L')
 
-        image.save(os.path.join(PROJECT_PATH,'test.jpg'))
+        #image.save(os.path.join(PROJECT_PATH, 'last_capture.jpg'))
 
         image = np.array(image)
         image[image > 100] = 255
@@ -115,14 +115,14 @@ class GifPage(tk.Frame):
             0: [ImageTk.PhotoImage(
                 image=Image.open(os.path.join(PROJECT_PATH, 'car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
                     (200, 240))) for x in
-        range(48)],
+                range(48)],
 
-        1: [ImageTk.PhotoImage(
-            image=Image.open(os.path.join(PROJECT_PATH, 'not_car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
-                (200, 240))) for x
-            in range(89)]
+            1: [ImageTk.PhotoImage(
+                image=Image.open(os.path.join(PROJECT_PATH, 'not_car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
+                    (200, 240))) for x
+                in range(89)]
 
-    }
+        }
 
         self.index = 0
 
@@ -136,5 +136,6 @@ class GifPage(tk.Frame):
         self.panel.after(100, self.animate)
 
 
-app = CarApp()
-app.mainloop()
+if __name__ == '__main__':
+    app = CarApp()
+    app.mainloop()
