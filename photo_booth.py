@@ -1,4 +1,5 @@
 import os
+import sys
 import tkinter as tk
 
 import cv2
@@ -20,6 +21,8 @@ class CarApp(tk.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
+        self._leave_app_button()
+
         self.class_to_display = 0
 
         self.frames = {}
@@ -30,6 +33,10 @@ class CarApp(tk.Tk):
             frame.grid(row=0, column=0, sticky='nsew')
 
         self.show_frame(CameraTest)
+
+    def _leave_app_button(self):
+        button = tk.Button(self, text='Quit', command=lambda: sys.exit())
+        button.pack()
 
     def show_frame(self, cont):
         frame = self.frames[cont]
@@ -50,6 +57,7 @@ class CameraTest(tk.Frame):
         self.welcome_message.img = img
         self.welcome_message.configure(image=img)
         self.welcome_message.grid()
+
         self.button_start = tk.Button(self, text='Start photo booth', command=self.display_stream)
         self.button_start.grid()
 
@@ -111,19 +119,16 @@ class GifPage(tk.Frame):
         button_back = tk.Button(self, text='Back', command=lambda: self.controller.show_frame(CameraTest))
         button_back.grid()
 
-        self.gif_images = {
-            0: [ImageTk.PhotoImage(
-                image=Image.open(os.path.join(PROJECT_PATH, 'car_gif', f'frame_{str(x + 1).zfill(2)}.jpg'))) for x in
-                range(48)],
-
-            1: [ImageTk.PhotoImage(
-                image=Image.open(os.path.join(PROJECT_PATH, 'not_car_gif', f'frame_{str(x + 1).zfill(2)}.jpg'))) for x
-                in range(89)]
-        }
-
+        self.gif_images = {0: [self._create_gif_frame(x, 0.07, 'car_gif') for x in range(48)],
+                           1: [self._create_gif_frame(x, 0.03, 'not_car_gif') for x in range(89)]}
         self.index = 0
 
         self.animate()
+
+    @staticmethod
+    def _create_gif_frame(x, delay, name):
+        path = os.path.join(PROJECT_PATH, name, f'frame_{str(x + 1).zfill(2)}_delay-{delay}s.jpg')
+        return ImageTk.PhotoImage(image=Image.open(path))
 
     def animate(self):
         image = self.gif_images[self.controller.class_to_display][self.index]
