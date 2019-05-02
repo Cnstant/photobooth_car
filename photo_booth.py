@@ -3,6 +3,7 @@ import tkinter as tk
 import cv2
 import numpy as np
 from PIL import ImageTk, Image
+from keras.models import load_model
 
 LARGE_FONT = ("Verdana", 12)
 
@@ -43,27 +44,30 @@ class CameraTest(tk.Frame):
 
         self.welcome_message = tk.Label(self)
         img = Image.open('/Users/constant.bridon/Documents/journeeBDA/photobooth_car/welcome_message.jpg').resize(
-            (640, 480))
+            (320, 240))
         img = ImageTk.PhotoImage(image=img)
         self.welcome_message.img = img
         self.welcome_message.configure(image=img)
-        self.welcome_message.grid()
+        self.welcome_message.grid(padx=30)
         self.button_start = tk.Button(self, text="Start photo booth", command=self.display_stream)
-        self.button_start.grid()
+        self.button_start.grid(padx=30)
 
         self.button_snapshot = tk.Button(self, text="snapshot", command=self.make_inference)
         self.panel = tk.Label(self)
         self.cap = cv2.VideoCapture(0)
-        self.cap.set(3, 640)
-        self.cap.set(4, 480)
+        self.cap.set(3, 160)
+        self.cap.set(4, 120)
 
         self.video_stream()
+
+        self.model = load_model('/Users/constant.bridon/Documents/journeeBDA/photobooth_car/model.h5')
+        self.img = None
 
     def video_stream(self):
         _, frame = self.cap.read()
         cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-        img = Image.fromarray(cv2image)
-        imgtk = ImageTk.PhotoImage(image=img)
+        self.img = Image.fromarray(cv2image)
+        imgtk = ImageTk.PhotoImage(image=self.img)
         self.panel.imgtk = imgtk
         self.panel.configure(image=imgtk)
         self.panel.after(1, self.video_stream)
@@ -71,15 +75,26 @@ class CameraTest(tk.Frame):
     def display_stream(self):
         self.button_start.grid_forget()
         self.welcome_message.grid_forget()
-        self.panel.grid()
+        self.panel.grid(padx=30)
         self.button_snapshot.grid()
 
     def make_inference(self):
         self.panel.grid_forget()
         self.button_snapshot.grid_forget()
-        self.welcome_message.grid()
-        self.button_start.grid()
-        self.controller.class_to_display = np.random.randint(0, 2)
+        self.welcome_message.grid(padx=30)
+        self.button_start.grid(padx=30)
+
+        image = self.img.resize((128, 128)).convert('L')
+
+        image.save('/Users/constant.bridon/Downloads/test.jpg')
+
+        image = np.array(image)
+        image[image > 100] = 255
+        image[image <= 100] = 0
+        image = np.array(Image.fromarray(image).convert('RGB')).reshape((1, 128, 128, 3))
+
+        prediction = self.model.predict_classes(image)[0][0]
+        self.controller.class_to_display = prediction
         self.controller.frames[GifPage].index = 0
         self.controller.show_frame(GifPage)
 
@@ -96,12 +111,12 @@ class GifPage(tk.Frame):
         button_back.grid()
 
         self.gif_images = {0: [ImageTk.PhotoImage(image=Image.open(
-            '/Users/constant.bridon/Documents/journeeBDA/photobooth_car/car_gif/frame_{}_delay-0.07s.jpg'.format(
-                str(x + 1).zfill(2))))
+            '/Users/constant.bridon/Documents/journeeBDA/photobooth_car/car_gif/frame_{}.jpg'.format(
+                str(x + 1).zfill(2))).resize((200, 240)))
             for x
             in range(48)], 1: [ImageTk.PhotoImage(image=Image.open(
-            '/Users/constant.bridon/Documents/journeeBDA/photobooth_car/not_car_gif/frame_{}_delay-0.03s.jpg'.format(
-                str(x + 1).zfill(2))))
+            '/Users/constant.bridon/Documents/journeeBDA/photobooth_car/not_car_gif/frame_{}.jpg'.format(
+                str(x + 1).zfill(2))).resize((200, 240)))
             for x
             in range(89)]}
         self.index = 0
