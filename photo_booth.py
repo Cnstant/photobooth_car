@@ -1,6 +1,7 @@
 import tkinter as tk
 
 import cv2
+import numpy as np
 from PIL import ImageTk, Image
 
 LARGE_FONT = ("Verdana", 12)
@@ -17,9 +18,11 @@ class CarApp(tk.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
+        self.class_to_display = 0
+
         self.frames = {}
 
-        for F in (CameraTest, CarGifPage, NotCarGifPage):
+        for F in (CameraTest, GifPage):
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -37,20 +40,29 @@ class CameraTest(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
-        self.button_start = tk.Button(self, text="Start photo_booth", command=self.display_stream)
+
+        self.welcome_message = tk.Label(self)
+        img = Image.open('/Users/constant.bridon/Documents/journeeBDA/photobooth_car/welcome_message.jpg').resize(
+            (640, 480))
+        img = ImageTk.PhotoImage(image=img)
+        self.welcome_message.img = img
+        self.welcome_message.configure(image=img)
+        self.welcome_message.grid()
+        self.button_start = tk.Button(self, text="Start photo booth", command=self.display_stream)
         self.button_start.grid()
 
-        self.button_snapshot = tk.Button(self, text="snapshot", command=self.stop_stream)
-
+        self.button_snapshot = tk.Button(self, text="snapshot", command=self.make_inference)
         self.panel = tk.Label(self)
-
         self.cap = cv2.VideoCapture(0)
+        self.cap.set(3, 640)
+        self.cap.set(4, 480)
+
         self.video_stream()
 
     def video_stream(self):
         _, frame = self.cap.read()
         cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-        img = Image.fromarray(cv2image).resize((480, 480))
+        img = Image.fromarray(cv2image)
         imgtk = ImageTk.PhotoImage(image=img)
         self.panel.imgtk = imgtk
         self.panel.configure(image=imgtk)
@@ -58,65 +70,49 @@ class CameraTest(tk.Frame):
 
     def display_stream(self):
         self.button_start.grid_forget()
+        self.welcome_message.grid_forget()
         self.panel.grid()
         self.button_snapshot.grid()
 
-    def stop_stream(self):
+    def make_inference(self):
         self.panel.grid_forget()
         self.button_snapshot.grid_forget()
+        self.welcome_message.grid()
         self.button_start.grid()
-        self.controller.show_frame(NotCarGifPage)
+        self.controller.class_to_display = np.random.randint(0, 2)
+        self.controller.frames[GifPage].index = 0
+        self.controller.show_frame(GifPage)
 
 
-class CarGifPage(tk.Frame):
+class GifPage(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-
-        button1 = tk.Button(self, text="Back", command=lambda: controller.show_frame(CameraTest))
-        button1.pack(side="bottom", fill="both", expand="yes", padx=10,
-                     pady=10)
         self.panel = tk.Label(self)
-        self.panel.pack(side="left", padx=10, pady=10)
-        self.gif_images = [ImageTk.PhotoImage(image=Image.open(
+        self.panel.grid(ipadx=80)
+
+        self.controller = controller
+        button_back = tk.Button(self, text="Back", command=lambda: self.controller.show_frame(CameraTest))
+        button_back.grid()
+
+        self.gif_images = {0: [ImageTk.PhotoImage(image=Image.open(
             '/Users/constant.bridon/Documents/journeeBDA/photobooth_car/car_gif/frame_{}_delay-0.07s.jpg'.format(
                 str(x + 1).zfill(2))))
             for x
-            in range(48)]
-        self.index = 0
-        self.animate()
-
-    def animate(self):
-        image = self.gif_images[self.index]
-        self.panel.configure(image=image)
-        self.panel.image = image
-        self.index = (self.index + 1) % 48
-        self.panel.after(100, self.animate)
-
-
-class NotCarGifPage(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-
-        button1 = tk.Button(self, text="Back", command=lambda: controller.show_frame(CameraTest))
-        button1.pack(side="bottom", fill="both", expand="yes", padx=10,
-                     pady=10)
-        self.panel = tk.Label(self)
-        self.panel.pack(side="left", padx=10, pady=10)
-        self.gif_images = [ImageTk.PhotoImage(image=Image.open(
+            in range(48)], 1: [ImageTk.PhotoImage(image=Image.open(
             '/Users/constant.bridon/Documents/journeeBDA/photobooth_car/not_car_gif/frame_{}_delay-0.03s.jpg'.format(
                 str(x + 1).zfill(2))))
             for x
-            in range(89)]
+            in range(89)]}
         self.index = 0
+
         self.animate()
 
     def animate(self):
-        image = self.gif_images[self.index]
+        image = self.gif_images[self.controller.class_to_display][self.index]
         self.panel.configure(image=image)
         self.panel.image = image
-        self.index = (self.index + 1) % 89
+        self.index = (self.index + 1) % len(self.gif_images[self.controller.class_to_display])
         self.panel.after(100, self.animate)
 
 
