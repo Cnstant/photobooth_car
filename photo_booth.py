@@ -45,13 +45,13 @@ class CameraTest(tk.Frame):
         self.controller = controller
 
         self.welcome_message = tk.Label(self)
-        img = Image.open(os.path.join(PROJECT_PATH, 'welcome_message.jpg')).resize(320, 240)
+        img = Image.open(os.path.join(PROJECT_PATH, 'welcome_message.jpg')).resize((320, 240))
         img = ImageTk.PhotoImage(image=img)
         self.welcome_message.img = img
         self.welcome_message.configure(image=img)
-        self.welcome_message.grid()
+        self.welcome_message.grid(padx=30)
         self.button_start = tk.Button(self, text='Start photo booth', command=self.display_stream)
-        self.button_start.grid()
+        self.button_start.grid(padx=30)
 
         self.button_snapshot = tk.Button(self, text='snapshot', command=self.make_inference)
         self.panel = tk.Label(self)
@@ -87,7 +87,7 @@ class CameraTest(tk.Frame):
 
         image = self.img.resize((128, 128)).convert('L')
 
-        image.save('/Users/constant.bridon/Downloads/test.jpg')
+        image.save(os.path.join(PROJECT_PATH,'test.jpg'))
 
         image = np.array(image)
         image[image > 100] = 255
@@ -113,13 +113,16 @@ class GifPage(tk.Frame):
 
         self.gif_images = {
             0: [ImageTk.PhotoImage(
-                image=Image.open(os.path.join(PROJECT_PATH, 'car_gif', f'frame_{str(x + 1).zfill(2)}.jpg'))) for x in
-                range(48)],
+                image=Image.open(os.path.join(PROJECT_PATH, 'car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
+                    (200, 240))) for x in
+        range(48)],
 
-            1: [ImageTk.PhotoImage(
-                image=Image.open(os.path.join(PROJECT_PATH, 'not_car_gif', f'frame_{str(x + 1).zfill(2)}.jpg'))) for x
-                in range(89)]
-        }
+        1: [ImageTk.PhotoImage(
+            image=Image.open(os.path.join(PROJECT_PATH, 'not_car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
+                (200, 240))) for x
+            in range(89)]
+
+    }
 
         self.index = 0
 
