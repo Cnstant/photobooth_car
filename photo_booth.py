@@ -1,10 +1,11 @@
+import os
 import tkinter as tk
 
 import cv2
 import numpy as np
 from PIL import ImageTk, Image
 
-LARGE_FONT = ("Verdana", 12)
+PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class CarApp(tk.Tk):
@@ -13,7 +14,7 @@ class CarApp(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         container = tk.Frame(self)
 
-        container.pack(side="top", fill="both", expand=True)
+        container.pack(side='top', fill='both', expand=True)
 
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
@@ -25,7 +26,7 @@ class CarApp(tk.Tk):
         for F in (CameraTest, GifPage):
             frame = F(container, self)
             self.frames[F] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
+            frame.grid(row=0, column=0, sticky='nsew')
 
         self.show_frame(CameraTest)
 
@@ -35,6 +36,7 @@ class CarApp(tk.Tk):
 
 
 class CameraTest(tk.Frame):
+    SHAPE = (640, 480)
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -42,16 +44,15 @@ class CameraTest(tk.Frame):
         self.controller = controller
 
         self.welcome_message = tk.Label(self)
-        img = Image.open('/Users/constant.bridon/Documents/journeeBDA/photobooth_car/welcome_message.jpg').resize(
-            (640, 480))
+        img = Image.open(os.path.join(PROJECT_PATH, 'welcome_message.jpg')).resize(self.SHAPE)
         img = ImageTk.PhotoImage(image=img)
         self.welcome_message.img = img
         self.welcome_message.configure(image=img)
         self.welcome_message.grid()
-        self.button_start = tk.Button(self, text="Start photo booth", command=self.display_stream)
+        self.button_start = tk.Button(self, text='Start photo booth', command=self.display_stream)
         self.button_start.grid()
 
-        self.button_snapshot = tk.Button(self, text="snapshot", command=self.make_inference)
+        self.button_snapshot = tk.Button(self, text='snapshot', command=self.make_inference)
         self.panel = tk.Label(self)
         self.cap = cv2.VideoCapture(0)
         self.cap.set(3, 640)
@@ -92,18 +93,13 @@ class GifPage(tk.Frame):
         self.panel.grid(ipadx=80)
 
         self.controller = controller
-        button_back = tk.Button(self, text="Back", command=lambda: self.controller.show_frame(CameraTest))
+        button_back = tk.Button(self, text='Back', command=lambda: self.controller.show_frame(CameraTest))
         button_back.grid()
 
-        self.gif_images = {0: [ImageTk.PhotoImage(image=Image.open(
-            '/Users/constant.bridon/Documents/journeeBDA/photobooth_car/car_gif/frame_{}_delay-0.07s.jpg'.format(
-                str(x + 1).zfill(2))))
-            for x
-            in range(48)], 1: [ImageTk.PhotoImage(image=Image.open(
-            '/Users/constant.bridon/Documents/journeeBDA/photobooth_car/not_car_gif/frame_{}_delay-0.03s.jpg'.format(
-                str(x + 1).zfill(2))))
-            for x
-            in range(89)]}
+        self.gif_images = {
+            0: [ImageTk.PhotoImage(image=Image.open(os.path.join(PROJECT_PATH, 'car_gif', f'frame_{str(x + 1).zfill(2)}_delay-0.07s.jpg'))) for x in range(48)],
+            1: [ImageTk.PhotoImage(image=Image.open(os.path.join(PROJECT_PATH, 'not_car_gif', f'frame_{str(x + 1).zfill(2)}_delay-0.03s.jpg'))) for x in range(89)]
+        }
         self.index = 0
 
         self.animate()
