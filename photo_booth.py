@@ -44,12 +44,12 @@ class CameraTest(tk.Frame):
 
         self.controller = controller
 
-        self.welcome_message = tk.Label(self)
-        img = Image.open(os.path.join(PROJECT_PATH, 'welcome_message.jpg')).resize((320, 240))
-        img = ImageTk.PhotoImage(image=img)
-        self.welcome_message.img = img
-        self.welcome_message.configure(image=img)
-        self.welcome_message.grid(padx=30)
+        self.text = tk.Label(self,
+                             text="Welcome to the car drawing Photo Booth !"
+                                  "\n To infer if your drawing is a car"
+                                  "\n click on start photo booth then snapshot ",
+                             bd=1, font='{Comic Sans MS} 16')
+        self.text.grid(padx=30, pady=80)
         self.button_start = tk.Button(self, text='Start photo booth', command=self.display_stream)
         self.button_start.grid(padx=30)
 
@@ -75,20 +75,18 @@ class CameraTest(tk.Frame):
 
     def display_stream(self):
         self.button_start.grid_forget()
-        self.welcome_message.grid_forget()
+        self.text.grid_forget()
         self.panel.grid(padx=30)
         self.button_snapshot.grid()
 
     def make_inference(self):
         self.panel.grid_forget()
         self.button_snapshot.grid_forget()
-        self.welcome_message.grid(padx=30)
+        self.text.grid(padx=30, pady=80)
         self.button_start.grid(padx=30)
 
         image = self.img.resize((128, 128)).convert('L')
-
         image.save(os.path.join(PROJECT_PATH, 'last_capture.jpg'))
-
         image = np.array(image)
         image = np.array(Image.fromarray(image).convert('RGB')).reshape((1, 128, 128, 3))
 

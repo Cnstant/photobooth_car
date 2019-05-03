@@ -41,12 +41,13 @@ class DrawTest(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.controller = controller
-        self.welcome_message = tk.Label(self)
-        img = Image.open(os.path.join(PROJECT_PATH, 'welcome_message.jpg')).resize((320, 240))
-        img = ImageTk.PhotoImage(image=img)
-        self.welcome_message.img = img
-        self.welcome_message.configure(image=img)
-        self.welcome_message.grid(padx=30)
+        self.text = tk.Label(self,
+                             text="Welcome to the car drawing detector !"
+                                  "\n Click on the button below "
+                                  "\n and draw something",
+                             bd=1, font='{Comic Sans MS} 16')
+        self.text.grid(padx=30, pady=80)
+
         self.button_start = tk.Button(self, text='20 seconds to draw', command=self.display_canvas)
         self.button_start.grid(padx=30)
 
@@ -54,6 +55,7 @@ class DrawTest(tk.Frame):
         self.image = Image.new("RGB", (460, 300), (255, 255, 255))
         self.draw = ImageDraw.Draw(self.image)
         self.canvas.old_coords = None
+        self.canvas.event_time = None
 
         self.counter = 20
 
@@ -64,10 +66,10 @@ class DrawTest(tk.Frame):
 
     def display_canvas(self):
         self.button_start.grid_forget()
-        self.welcome_message.grid_forget()
+        self.text.grid_forget()
         self.canvas.grid(padx=10, pady=10)
         self.label.grid()
-        self.controller.bind('<B1-Motion>', self._myfunction)
+        self.controller.bind('<B1-Motion>', self.drawing)
         self.counter_label(self.label)
 
     def counter_label(self, label):
@@ -82,14 +84,16 @@ class DrawTest(tk.Frame):
 
         count()
 
-    def _myfunction(self, event):
+    def drawing(self, event):
+
         x, y = event.x, event.y
-        if self.canvas.old_coords and np.sqrt(
-                (x - self.canvas.old_coords[0]) ** 2 + (y - self.canvas.old_coords[1]) ** 2) <= 20:
+        event_time = event.time
+        if self.canvas.old_coords and (event_time - self.canvas.event_time) < 200:
             x1, y1 = self.canvas.old_coords
             self.canvas.create_line(x, y, x1, y1)
             self.draw.line([x, y, x1, y1], (0, 0, 0), 5)
         self.canvas.old_coords = x, y
+        self.canvas.event_time = event_time
 
     def make_inference(self):
         self.canvas.delete("all")
@@ -100,14 +104,13 @@ class DrawTest(tk.Frame):
         self.image = Image.new("RGB", (460, 300), (255, 255, 255))
         self.draw = ImageDraw.Draw(self.image)
 
-        self.welcome_message.grid(padx=30)
+        self.text.grid(padx=30, pady=80)
         self.button_start.grid(padx=30)
 
         image.save(os.path.join(PROJECT_PATH, 'last_capture.jpg'))
         image = np.array(image.convert('RGB')).reshape((1, 128, 128, 3))
 
         prediction = self.model.predict_classes(image)[0][0]
-        print(prediction)
         self.controller.class_to_display = prediction
         self.controller.frames[GifPage].index = 0
         self.controller.show_frame(GifPage)
@@ -118,7 +121,7 @@ class GifPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.panel = tk.Label(self)
-        self.panel.grid(ipadx=80)
+        self.panel.grid(padx=80)
 
         self.controller = controller
         button_back = tk.Button(self, text='Back', command=lambda: self.controller.show_frame(DrawTest))
