@@ -1,8 +1,9 @@
+import io
 import os
 import tkinter as tk
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageTk
+from PIL import Image, ImageTk
 from keras.models import load_model
 
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -51,9 +52,7 @@ class DrawTest(tk.Frame):
         self.button_start = tk.Button(self, text='20 seconds to draw', command=self.display_canvas)
         self.button_start.grid(padx=30)
 
-        self.canvas = tk.Canvas(self, width=460, height=300)
-        self.image = Image.new("RGB", (460, 300), (255, 255, 255))
-        self.draw = ImageDraw.Draw(self.image)
+        self.canvas = tk.Canvas(self, width=160, height=120)
         self.canvas.old_coords = None
         self.canvas.event_time = None
 
@@ -90,25 +89,24 @@ class DrawTest(tk.Frame):
         event_time = event.time
         if self.canvas.old_coords and (event_time - self.canvas.event_time) < 200:
             x1, y1 = self.canvas.old_coords
-            self.canvas.create_line(x, y, x1, y1)
-            self.draw.line([x, y, x1, y1], (0, 0, 0), 5)
+            self.canvas.create_line(x, y, x1, y1, width=1)
         self.canvas.old_coords = x, y
         self.canvas.event_time = event_time
 
     def make_inference(self):
+
+        ps = self.canvas.postscript(colormode='color')
+        img = Image.open(io.BytesIO(ps.encode('utf-8')))
+
         self.canvas.delete("all")
         self.canvas.grid_forget()
         self.label.grid_forget()
-        image = self.image.resize((128, 128)).convert('L')
-
-        self.image = Image.new("RGB", (460, 300), (255, 255, 255))
-        self.draw = ImageDraw.Draw(self.image)
-
         self.text.grid(padx=30, pady=80)
         self.button_start.grid(padx=30)
 
-        image.save(os.path.join(PROJECT_PATH, 'last_capture.jpg'))
-        image = np.array(image.convert('RGB')).reshape((1, 128, 128, 3))
+        img = img.resize((128, 128))
+        img.save(os.path.join(PROJECT_PATH, 'last_capture.jpg'))
+        image = np.array(img).reshape((1, 128, 128, 3))
 
         prediction = self.model.predict_classes(image)[0][0]
         self.controller.class_to_display = prediction
@@ -129,12 +127,14 @@ class GifPage(tk.Frame):
 
         self.gif_images = {
             0: [ImageTk.PhotoImage(
-                image=Image.open(os.path.join(PROJECT_PATH, 'car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
+                image=Image.open(
+                    os.path.join(PROJECT_PATH, 'car_gif', 'frame_{}.jpg'.format(str(x + 1).zfill(2)))).resize(
                     (200, 240))) for x in
                 range(48)],
 
             1: [ImageTk.PhotoImage(
-                image=Image.open(os.path.join(PROJECT_PATH, 'not_car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
+                image=Image.open(
+                    os.path.join(PROJECT_PATH, 'not_car_gif', 'frame_{}.jpg'.format(str(x + 1).zfill(2)))).resize(
                     (200, 240))) for x
                 in range(89)]
 

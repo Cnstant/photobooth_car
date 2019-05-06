@@ -37,7 +37,6 @@ class CarApp(tk.Tk):
 
 
 class CameraTest(tk.Frame):
-    SHAPE = (640, 480)
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -85,10 +84,13 @@ class CameraTest(tk.Frame):
         self.text.grid(padx=30, pady=80)
         self.button_start.grid(padx=30)
 
-        image = self.img.resize((128, 128)).convert('L')
-        image.save(os.path.join(PROJECT_PATH, 'last_capture.jpg'))
+        image = self.img.resize((128, 128), Image.ANTIALIAS).convert('L')
         image = np.array(image)
-        image = np.array(Image.fromarray(image).convert('RGB')).reshape((1, 128, 128, 3))
+        image[image < 100] = 0
+        image[image > 100] = 255
+        image = Image.fromarray(image).convert('RGB')
+        image.save(os.path.join(PROJECT_PATH, 'last_capture.jpg'))
+        image = np.array(image).reshape((1, 128, 128, 3))
 
         prediction = self.model.predict_classes(image)[0][0]
         self.controller.class_to_display = prediction
@@ -109,17 +111,18 @@ class GifPage(tk.Frame):
 
         self.gif_images = {
             0: [ImageTk.PhotoImage(
-                image=Image.open(os.path.join(PROJECT_PATH, 'car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
+                image=Image.open(
+                    os.path.join(PROJECT_PATH, 'car_gif', 'frame_{}.jpg'.format(str(x + 1).zfill(2)))).resize(
                     (200, 240))) for x in
                 range(48)],
 
             1: [ImageTk.PhotoImage(
-                image=Image.open(os.path.join(PROJECT_PATH, 'not_car_gif', f'frame_{str(x + 1).zfill(2)}.jpg')).resize(
+                image=Image.open(
+                    os.path.join(PROJECT_PATH, 'not_car_gif', 'frame_{}.jpg'.format(str(x + 1).zfill(2)))).resize(
                     (200, 240))) for x
                 in range(89)]
 
         }
-
         self.index = 0
 
         self.animate()
