@@ -90,7 +90,7 @@ class DrawTest(tk.Frame):
         event_time = event.time
         if self.canvas.old_coords and (event_time - self.canvas.event_time) < 200:
             x1, y1 = self.canvas.old_coords
-            self.canvas.create_line(x, y, x1, y1)
+            self.canvas.create_line(x, y, x1, y1, width=10)
             self.draw.line([x, y, x1, y1], (0, 0, 0), 5)
         self.canvas.old_coords = x, y
         self.canvas.event_time = event_time
@@ -109,6 +109,59 @@ class DrawTest(tk.Frame):
 
         image.save(os.path.join(PROJECT_PATH, 'last_capture.jpg'))
         image = np.array(image.convert('RGB')).reshape((1, 128, 128, 3))
+
+        ### https://www.codeastar.com/visualize-convolutional-neural-network/
+
+        import matplotlib.pyplot as plt
+        plt.imshow(image[0])
+        from keras.models import Model
+        layer_outputs = [layer.output for layer in self.model.layers]
+        activation_model = Model(inputs=self.model.input, outputs=layer_outputs)
+        activations = activation_model.predict(image)
+
+        def display_activation(activations, col_size, row_size, act_index):
+            activation = activations[act_index]
+            activation_index = 0
+            fig, ax = plt.subplots(row_size, col_size, figsize=(row_size * 2.5, col_size * 1.5))
+            for row in range(0, row_size):
+                for col in range(0, col_size):
+                    ax[row][col].imshow(activation[0, :, :, activation_index], cmap='gray')
+                    activation_index += 1
+
+        print(self.model.summary())
+
+        ### see filter
+        weight_conv2d_1 = self.model.layers[0].get_weights()[0][:, :, 0, :]
+
+        col_size = 8
+        row_size = 4
+        filter_index = 0
+        fig, ax = plt.subplots(row_size, col_size, figsize=(12, 8))
+        for row in range(0, row_size):
+            for col in range(0, col_size):
+                ax[row][col].imshow(weight_conv2d_1[:, :, filter_index], cmap="gray")
+                filter_index += 1
+
+        ### see activation map layer 0 (32 features, 3x3 conv)
+        display_activation(activations, 8, 4, 0)
+        plt.show()
+
+        ### see activation map layer 1 (max pull)
+        display_activation(activations, 8, 4, 1)
+        plt.show()
+
+        ### see activation map layer 3 (20 feat, 3x3 + max pull)
+        display_activation(activations, 5, 4, 3)
+        plt.show()
+
+        ### see activation map layer 5 (12 feat, 3x3 + max pull)
+        display_activation(activations, 4, 3, 5)
+        plt.show()
+
+        ### see activation map layer 7 (8 feat, 3x3 + max pull)
+        display_activation(activations, 4, 2, 7)
+        plt.show()
+
 
         prediction = self.model.predict_classes(image)[0][0]
         self.controller.class_to_display = prediction
