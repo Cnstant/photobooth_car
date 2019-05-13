@@ -1,3 +1,5 @@
 .idea/
 __pycache__/
 last_capture.jpg
+last_capture_raw.jpg
+.DS_Store

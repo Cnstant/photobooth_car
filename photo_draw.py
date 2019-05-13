@@ -52,7 +52,7 @@ class DrawTest(tk.Frame):
         self.button_start = tk.Button(self, text='20 seconds to draw', command=self.display_canvas)
         self.button_start.grid(padx=30)
 
-        self.canvas = tk.Canvas(self, width=160, height=120)
+        self.canvas = tk.Canvas(self, width=440, height=280)
         self.canvas.old_coords = None
         self.canvas.event_time = None
 
@@ -89,7 +89,7 @@ class DrawTest(tk.Frame):
         event_time = event.time
         if self.canvas.old_coords and (event_time - self.canvas.event_time) < 200:
             x1, y1 = self.canvas.old_coords
-            self.canvas.create_line(x, y, x1, y1, width=1)
+            self.canvas.create_line(x, y, x1, y1, width=3)
         self.canvas.old_coords = x, y
         self.canvas.event_time = event_time
 
